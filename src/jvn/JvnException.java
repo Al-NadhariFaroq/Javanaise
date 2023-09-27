@@ -1,9 +1,6 @@
-/***
+/**
  * JAVANAISE API
- * Contact: 
- * <p>
- * Authors:  
- */
+ **/
 
 package jvn;
 
@@ -13,21 +10,18 @@ import java.io.Serial;
  * Interface of a JVN Exception.
  */
 public class JvnException extends Exception {
-    /**
-     *
-     */
-    @Serial
-    private static final long serialVersionUID = 1L;
-    String message;
+	@Serial
+	private static final long serialVersionUID = 1L;
+	String message;
 
-    public JvnException() {
-    }
+	public JvnException() {
+	}
 
-    public JvnException(String message) {
-        this.message = message;
-    }
+	public JvnException(String message) {
+		this.message = message;
+	}
 
-    public String getMessage() {
-        return message;
-    }
+	public String getMessage() {
+		return message;
+	}
 }
