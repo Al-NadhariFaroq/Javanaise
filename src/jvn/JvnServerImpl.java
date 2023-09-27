@@ -17,9 +17,12 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	private static final long serialVersionUID = 1L;
 
 	private static JvnServerImpl js = null; // A JVN server is managed as a singleton
+	private JvnRemoteCoord coordinator;
 
 	/**
 	 * Default constructor
+	 *
+	 *
 	 *
 	 * @throws JvnException JVN exception
 	 **/
@@ -75,6 +78,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 **/
 	public void jvnRegisterObject(String jon, JvnObject jo) throws JvnException {
 		// to be completed
+		// coordinator.jvnRegisterObject(jon,jo,this);
 	}
 
 	/**
@@ -86,6 +90,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 **/
 	public JvnObject jvnLookupObject(String jon) throws JvnException {
 		// to be completed
+		// coordinator.jvnLookupObject(jon,this);
 		return null;
 	}
 
@@ -98,6 +103,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 **/
 	public Serializable jvnLockRead(int joi) throws JvnException {
 		// to be completed
+		//coordinator.jvnLockRead(joi,this);
 		return null;
 	}
 
@@ -110,6 +116,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 **/
 	public Serializable jvnLockWrite(int joi) throws JvnException {
 		// to be completed
+		// coordinator.jvnLockWrite(joi,this);
 		return null;
 	}
 

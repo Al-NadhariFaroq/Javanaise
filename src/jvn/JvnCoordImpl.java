@@ -10,12 +10,21 @@ package jvn;
 
 import java.io.Serial;
 import java.rmi.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Set;
 
 public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 	@Serial
 	private static final long serialVersionUID = 1L;
+
+    private Hashtable<String,JvnObject> objects;
+	private Set<JvnRemoteServer> servers;
+    private int nextId;
 
 	/**
 	 * Default constructor
@@ -25,6 +34,10 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	private JvnCoordImpl() throws Exception {
 		// to be completed
 		// start Registry
+
+        objects =   new Hashtable<>();
+		servers = new HashSet<>();
+        nextId = 0 ;
 	}
 
 	/**
@@ -36,7 +49,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 **/
 	public int jvnGetObjectId() throws RemoteException, JvnException {
 		// to be completed
-		return 0;
+		return ++nextId;
 	}
 
 	/**
@@ -51,6 +64,8 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 **/
 	public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws RemoteException, JvnException {
 		// to be completed
+        objects.put(jon,jo);
+		servers.add(js);
 	}
 
 	/**
@@ -63,8 +78,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 * @throws JvnException JVN exception
 	 **/
 	public JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws RemoteException, JvnException {
-		// to be completed
-		return null;
+		return objects.get(jon);
 	}
 
 	/**
