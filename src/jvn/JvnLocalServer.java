@@ -1,20 +1,17 @@
-/**
+/*
  * JAVANAISE API
- * <p>
  * JvnLocalServer interface
- * <p>
- * Defines the local interface provided by a JVN server An application uses the Javanaise service through the local
- * interface provided by the JVN server
- **/
+ * Defines the local interface provided by a JVN server
+ * An application uses the Javanaise service through the local interface provided by the JVN server
+ */
 
 package jvn;
 
 import java.io.Serializable;
 
 /**
- * Local interface of a JVN server (used by the applications).
- * An application can get the reference of a JVN server through the static
- * method jvnGetServer() (see JvnServerImpl).
+ * Local interface of a JVN server (used by the applications). An application can get the reference of a JVN server
+ * through the static method jvnGetServer() (see JvnServerImpl).
  **/
 public interface JvnLocalServer {
 	/**

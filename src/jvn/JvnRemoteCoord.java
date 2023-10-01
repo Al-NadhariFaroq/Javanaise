@@ -1,10 +1,8 @@
-/**
+/*
  * JAVANAISE API
- * <p>
  * JvnRemoteCoord interface
- * <p>
  * This interface defines the remote interface provided by the Javanaise coordinator
- **/
+ */
 
 package jvn;
 
@@ -29,7 +27,6 @@ public interface JvnRemoteCoord extends Remote {
 	 *
 	 * @param jon the JVN object name
 	 * @param jo  the JVN object
-	 * @param joi the JVN object identification
 	 * @param js  the remote reference of the JVNServer
 	 * @throws RemoteException Java RMI exception
 	 * @throws JvnException    JVN exception

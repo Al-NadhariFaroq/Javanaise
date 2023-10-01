@@ -1,6 +1,6 @@
-/**
+/*
  * Sentence class : used for keeping the text exchanged between users during a chat application
- **/
+ */
 
 package irc;
 

@@ -1,34 +1,32 @@
-/**
+/*
  * JAVANAISE Implementation
- * <p>
  * JvnServerImpl class
- * <p>
  * Implementation of a Javanaise server
- **/
+ */
 
 package jvn;
 
-import java.rmi.*;
-import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
+import java.rmi.*;
+import java.rmi.registry.*;
+import java.rmi.server.*;
 
 public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer, JvnRemoteServer {
 	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private static JvnServerImpl js = null; // A JVN server is managed as a singleton
-	private JvnRemoteCoord coordinator;
+	private final JvnRemoteCoord coordinator;
 
 	/**
 	 * Default constructor
-	 *
-	 *
 	 *
 	 * @throws JvnException JVN exception
 	 **/
 	private JvnServerImpl() throws Exception {
 		super();
-		// to be completed
+		Registry registry = LocateRegistry.getRegistry();
+		coordinator = (JvnRemoteCoord) registry.lookup("Coordinator");
 	}
 
 	/**
@@ -42,6 +40,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 			try {
 				js = new JvnServerImpl();
 			} catch (Exception e) {
+				System.out.println("Error creating the Javanaise Server!\n" + e);
 				return null;
 			}
 		}
@@ -77,8 +76,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @throws JvnException JVN exception
 	 **/
 	public void jvnRegisterObject(String jon, JvnObject jo) throws JvnException {
-		// to be completed
-		// coordinator.jvnRegisterObject(jon,jo,this);
+		try {
+			coordinator.jvnRegisterObject(jon, jo, this);
+		} catch (RemoteException e) {
+			throw new JvnException("Register object error!\n" + e);
+		}
 	}
 
 	/**
@@ -121,12 +123,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	}
 
 	/**
-	 * Invalidate the Read lock of the JVN object identified by id
-	 * called by the JVN coordinator
+	 * Invalidate the Read lock of the JVN object identified by id called by the JVN coordinator
 	 *
 	 * @param joi the JVN object identification
 	 * @throws RemoteException Java RMI exception
-	 * @throws JvnException JVN exception
+	 * @throws JvnException    JVN exception
 	 **/
 	public void jvnInvalidateReader(int joi) throws RemoteException, JvnException {
 		// to be completed
@@ -138,7 +139,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @param joi the JVN object identification
 	 * @return the current JVN object state
 	 * @throws RemoteException Java RMI exception
-	 * @throws JvnException JVN exception
+	 * @throws JvnException    JVN exception
 	 **/
 	public Serializable jvnInvalidateWriter(int joi) throws RemoteException, JvnException {
 		// to be completed
@@ -151,7 +152,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @param joi the JVN object identification
 	 * @return the current JVN object state
 	 * @throws RemoteException Java RMI exception
-	 * @throws JvnException JVN exception
+	 * @throws JvnException    JVN exception
 	 **/
 	public Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException {
 		// to be completed

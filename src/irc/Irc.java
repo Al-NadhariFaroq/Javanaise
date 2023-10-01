@@ -1,6 +1,6 @@
-/**
+/*
  * Irc class : simple implementation of a chat using JAVANAISE
- **/
+ */
 
 package irc;
 

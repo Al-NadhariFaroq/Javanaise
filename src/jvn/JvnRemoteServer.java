@@ -1,11 +1,9 @@
-/**
+/*
  * JAVANAISE API
- * <p>
  * JvnRemoteServer interface
- * <p>
- * Defines the remote interface provided by a JVN server This interface is intended to be invoked by the Javanaise
- * coordinator
- **/
+ * Defines the remote interface provided by a JVN server
+ * This interface is intended to be invoked by the Javanaise coordinator
+ */
 
 package jvn;
 
@@ -21,7 +19,7 @@ public interface JvnRemoteServer extends Remote {
 	 *
 	 * @param joi the JVN object identification
 	 * @throws RemoteException Java RMI exception
-	 * @throws JvnException JVN exception
+	 * @throws JvnException    JVN exception
 	 **/
 	void jvnInvalidateReader(int joi) throws RemoteException, JvnException;
 
@@ -31,7 +29,7 @@ public interface JvnRemoteServer extends Remote {
 	 * @param joi the JVN object identification
 	 * @return the current JVN object state
 	 * @throws RemoteException Java RMI exception
-	 * @throws JvnException JVN exception
+	 * @throws JvnException    JVN exception
 	 **/
 	Serializable jvnInvalidateWriter(int joi) throws RemoteException, JvnException;
 
@@ -41,7 +39,7 @@ public interface JvnRemoteServer extends Remote {
 	 * @param joi the JVN object identification
 	 * @return the current JVN object state
 	 * @throws RemoteException Java RMI exception
-	 * @throws JvnException JVN exception
+	 * @throws JvnException    JVN exception
 	 **/
 	Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException;
 }

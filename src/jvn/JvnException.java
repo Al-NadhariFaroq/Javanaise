@@ -1,6 +1,6 @@
-/**
+/*
  * JAVANAISE API
- **/
+ */
 
 package jvn;
 
