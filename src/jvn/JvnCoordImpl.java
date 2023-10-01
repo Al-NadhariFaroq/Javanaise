@@ -8,7 +8,6 @@ package jvn;
 
 import java.io.*;
 import java.rmi.*;
-import java.rmi.registry.*;
 import java.rmi.server.*;
 import java.util.*;
 
@@ -25,26 +24,12 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 *
 	 * @throws JvnException JVN exception
 	 **/
-	private JvnCoordImpl() throws Exception {
+	public JvnCoordImpl() throws Exception {
 		objects = new Hashtable<>();
 		servers = new HashSet<>();
 		nextId = 0;
 	}
 
-	public static void main(String[] args) {
-		try {
-			// Create a coordinator remote object
-			JvnCoordImpl jvnCoord = new JvnCoordImpl();
-			JvnRemoteCoord stub = (JvnRemoteCoord) UnicastRemoteObject.exportObject(jvnCoord, 0);
-
-			// Bind the coordinator remote object's stub in the RMI registry
-			Registry registry = LocateRegistry.getRegistry();
-			registry.bind("Coordinator", stub);
-		} catch (Exception e) {
-			System.err.println("Server exception: " + e);
-			e.printStackTrace();
-		}
-	}
 
 	/**
 	 * Allocate a NEW JVN object id (usually allocated to a newly created JVN object)

@@ -25,7 +25,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 **/
 	private JvnServerImpl() throws Exception {
 		super();
-		Registry registry = LocateRegistry.getRegistry();
+		Registry registry = LocateRegistry.getRegistry(1224);
 		coordinator = (JvnRemoteCoord) registry.lookup("Coordinator");
 	}
 
@@ -54,6 +54,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 **/
 	public void jvnTerminate() throws JvnException {
 		// to be completed
+		// coordinator.jvnTerminate(this);
 	}
 
 	/**
