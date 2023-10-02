@@ -53,8 +53,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @throws JvnException JVN exception
 	 **/
 	public void jvnTerminate() throws JvnException {
-		// to be completed
-		// coordinator.jvnTerminate(this);
+		try {
+			coordinator.jvnTerminate(this);
+		} catch (RemoteException e) {
+			throw new JvnException("Terminate server error!\n" + e);
+		}
 	}
 
 	/**
@@ -65,8 +68,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @throws JvnException JVN exception
 	 **/
 	public JvnObject jvnCreateObject(Serializable o) throws JvnException {
-		// to be completed
-		return null;
+		try {
+			return new JvnObjectImpl(o, coordinator.jvnGetObjectId());
+		} catch (RemoteException e) {
+			throw new JvnException("Create object error!\n" + e);
+		}
 	}
 
 	/**
@@ -92,9 +98,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @throws JvnException JVN exception
 	 **/
 	public JvnObject jvnLookupObject(String jon) throws JvnException {
-		// to be completed
-		// coordinator.jvnLookupObject(jon,this);
-		return null;
+		try {
+			return coordinator.jvnLookupObject(jon,this);
+		} catch (RemoteException e) {
+			throw new JvnException("Lookup object error!\n" + e);
+		}
 	}
 
 	/**
@@ -105,9 +113,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @throws JvnException JVN exception
 	 **/
 	public Serializable jvnLockRead(int joi) throws JvnException {
-		// to be completed
-		//coordinator.jvnLockRead(joi,this);
-		return null;
+		try {
+			return coordinator.jvnLockRead(joi,this);
+		} catch (RemoteException e) {
+			throw new JvnException("Lock Read error!\n" + e);
+		}
 	}
 
 	/**
@@ -118,9 +128,11 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @throws JvnException JVN exception
 	 **/
 	public Serializable jvnLockWrite(int joi) throws JvnException {
-		// to be completed
-		// coordinator.jvnLockWrite(joi,this);
-		return null;
+		try {
+			return coordinator.jvnLockWrite(joi,this);
+		} catch (RemoteException e) {
+			throw new JvnException("Lock Write error!\n" + e);
+		}
 	}
 
 	/**

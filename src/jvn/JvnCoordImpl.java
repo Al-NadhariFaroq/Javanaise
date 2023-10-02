@@ -15,8 +15,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	@Serial
 	private static final long serialVersionUID = 1L;
 
-	private final Hashtable<String, JvnObject> objects;
-	private final Set<JvnRemoteServer> servers;
+	Hashtable<Integer, JvnObjectData> objects;
 	private int nextId;
 
 	/**
@@ -26,10 +25,8 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 **/
 	public JvnCoordImpl() throws Exception {
 		objects = new Hashtable<>();
-		servers = new HashSet<>();
 		nextId = 0;
 	}
-
 
 	/**
 	 * Allocate a NEW JVN object id (usually allocated to a newly created JVN object)
@@ -39,7 +36,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 * @throws JvnException    JVN exception
 	 **/
 	public int jvnGetObjectId() throws RemoteException, JvnException {
-		// to be completed
 		return ++nextId;
 	}
 
@@ -53,8 +49,14 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 * @throws JvnException    JVN exception
 	 **/
 	public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws RemoteException, JvnException {
-		objects.put(jon, jo);
-		servers.add(js);
+		int joi = jo.jvnGetObjectId();
+		System.out.println("Register object of id: " + joi + " with the name: " + jon);
+		if (objects.get(joi) == null) {
+			JvnObjectData data = new JvnObjectData(joi, jo, jon, js);
+			objects.put(joi, data);
+		} else {
+			objects.get(joi).addName(jon);
+		}
 	}
 
 	/**
@@ -67,7 +69,21 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 * @throws JvnException    JVN exception
 	 **/
 	public JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws RemoteException, JvnException {
-		return objects.get(jon);
+		System.out.print("Look up for object named: " + jon + " ");
+		JvnObjectData data = null;
+		for (JvnObjectData curData : objects.values()) {
+			if (curData.containsName(jon)) {
+				data = curData;
+				break;
+			}
+		}
+		if (data == null) {
+			System.out.println("Not find!");
+			return null;
+		}
+		System.out.println("Find!");
+		data.addServer(js);
+		return data.getJvnObject();
 	}
 
 	/**
@@ -106,6 +122,17 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
 	 * @throws JvnException    JVN exception
 	 **/
 	public void jvnTerminate(JvnRemoteServer js) throws RemoteException, JvnException {
-		// to be completed
+		for (JvnObjectData data : objects.values()) {
+			data.removeServer(js);
+		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder txt = new StringBuilder();
+		for (JvnObjectData data : objects.values()) {
+			txt.append(data.toString());
+		}
+		return txt.toString();
 	}
 }
