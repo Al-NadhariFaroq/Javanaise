@@ -6,7 +6,7 @@ import java.util.List;
 
 public class JvnObjectData {
     private final int joi;
-    private final JvnObject jo;
+    private JvnObject jo;
     private final List<String> names;
     private final Hashtable<JvnRemoteServer, State> servers;
 
@@ -27,6 +27,10 @@ public class JvnObjectData {
         return jo;
     }
 
+    public void setJvnObject(JvnObject jo) {
+        this.jo = jo;
+    }
+
     public Boolean containsName(String name) {
         return names.contains(name);
     }
@@ -37,12 +41,16 @@ public class JvnObjectData {
         }
     }
 
+    public State getServerLock(JvnRemoteServer js) {
+        return servers.get(js);
+    }
+
     public Boolean containsServer(JvnRemoteServer js) {
         return servers.containsKey(js);
     }
 
     public void addServer(JvnRemoteServer js) {
-        if (!servers.containsKey(js)){
+        if (!servers.containsKey(js)) {
             servers.put(js, State.NL);
         }
     }
@@ -52,9 +60,28 @@ public class JvnObjectData {
     }
 
     public void updateLock(JvnRemoteServer js, State lock) {
-        if (servers.containsKey(js)){
+        if (servers.containsKey(js)) {
             servers.put(js, lock);
         }
+    }
+
+    public JvnRemoteServer findWriteLockServer() {
+        for(JvnRemoteServer server : servers.keySet()) {
+            if (State.W.equals(servers.get(server))) {
+                return server;
+            }
+        }
+        return null;
+    }
+
+    public List<JvnRemoteServer> findReadLockServers() {
+        List<JvnRemoteServer> list = new ArrayList<>();
+        for (JvnRemoteServer server : servers.keySet()) {
+            if (servers.get(server).equals(State.R)) {
+                list.add(server);
+            }
+        }
+        return list;
     }
 
     @Override

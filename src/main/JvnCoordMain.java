@@ -15,7 +15,7 @@ public class JvnCoordMain {
                 while(true) {
                     System.out.println(jvnCoord);
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(3000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
