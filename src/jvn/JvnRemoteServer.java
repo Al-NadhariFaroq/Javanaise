@@ -1,17 +1,18 @@
 /*
  * JAVANAISE API
  * JvnRemoteServer interface
- * Defines the remote interface provided by a JVN server
- * This interface is intended to be invoked by the Javanaise coordinator
+ * Defines the remote interface provided by a JVN server.
+ * This interface is intended to be invoked by the Javanaise coordinator.
  */
 
 package jvn;
 
-import java.rmi.*;
-import java.io.*;
+import java.io.Serializable;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
- * Remote interface of a JVN server (used by a remote JVN coordinator)
+ * Remote interface of a JVN server (used by a remote JVN coordinator).
  */
 public interface JvnRemoteServer extends Remote {
 	/**

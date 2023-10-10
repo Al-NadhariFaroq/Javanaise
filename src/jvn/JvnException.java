@@ -12,6 +12,7 @@ import java.io.Serial;
 public class JvnException extends Exception {
 	@Serial
 	private static final long serialVersionUID = 1L;
+
 	String message;
 
 	public JvnException() {

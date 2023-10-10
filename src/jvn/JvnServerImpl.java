@@ -1,28 +1,33 @@
 /*
  * JAVANAISE Implementation
  * JvnServerImpl class
- * Implementation of a Javanaise server
+ * Implementation of a Javanaise server.
  */
 
 package jvn;
 
-import java.io.*;
-import java.rmi.*;
-import java.rmi.registry.*;
-import java.rmi.server.*;
+import java.io.Serial;
+import java.io.Serializable;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Hashtable;
 
+/**
+ * Implementation of a JVN server (used by the application and a remote JVN coordinator).
+ */
 public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer, JvnRemoteServer {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private static JvnServerImpl js = null; // A JVN server is managed as a singleton
-    private final JvnRemoteCoord coordinator;
 
+    private final JvnRemoteCoord coordinator;
     private final Hashtable<Integer, JvnObject> objects;
 
     /**
-     * Default constructor
+     * Default constructor.
      *
      * @throws Exception exception
      **/
@@ -34,7 +39,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
     }
 
     /**
-     * Static method allowing an application to get a reference to a JVN server instance
+     * Static method allowing an application to get a reference to a JVN server instance.
      *
      * @return the JVN server
      * @throws JvnException JVN exception
@@ -50,11 +55,6 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         return js;
     }
 
-    /**
-     * The JVN service is not used anymore
-     *
-     * @throws JvnException JVN exception
-     **/
     public void jvnTerminate() throws JvnException {
         try {
             coordinator.jvnTerminate(this);
@@ -63,13 +63,6 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         }
     }
 
-    /**
-     * Creation of a JVN object
-     *
-     * @param o the JVN object state
-     * @return the new JVN object
-     * @throws JvnException JVN exception
-     **/
     public JvnObject jvnCreateObject(Serializable o) throws JvnException {
         try {
             return new JvnObjectImpl(o, coordinator.jvnGetObjectId());
@@ -78,13 +71,6 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         }
     }
 
-    /**
-     * Associate a symbolic name with a JVN object
-     *
-     * @param jon the JVN object name
-     * @param jo  the JVN object
-     * @throws JvnException JVN exception
-     **/
     public void jvnRegisterObject(String jon, JvnObject jo) throws JvnException {
         try {
             coordinator.jvnRegisterObject(jon, jo, this);
@@ -94,13 +80,6 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         }
     }
 
-    /**
-     * Provide the reference of a JVN object being given its symbolic name
-     *
-     * @param jon the JVN object name
-     * @return the JVN object
-     * @throws JvnException JVN exception
-     **/
     public JvnObject jvnLookupObject(String jon) throws JvnException {
         try {
             JvnObject jo = coordinator.jvnLookupObject(jon, this);
@@ -113,13 +92,6 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         }
     }
 
-    /**
-     * Get a Read lock on a JVN object
-     *
-     * @param joi the JVN object identification
-     * @return the current JVN object state
-     * @throws JvnException JVN exception
-     **/
     public Serializable jvnLockRead(int joi) throws JvnException {
         try {
             return coordinator.jvnLockRead(joi, this);
@@ -128,13 +100,6 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         }
     }
 
-    /**
-     * Get a Write lock on a JVN object
-     *
-     * @param joi the JVN object identification
-     * @return the current JVN object state
-     * @throws JvnException JVN exception
-     **/
     public Serializable jvnLockWrite(int joi) throws JvnException {
         try {
             return coordinator.jvnLockWrite(joi, this);
@@ -143,37 +108,14 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
         }
     }
 
-    /**
-     * Invalidate the Read lock of the JVN object identified by id called by the JVN coordinator
-     *
-     * @param joi the JVN object identification
-     * @throws RemoteException Java RMI exception
-     * @throws JvnException    JVN exception
-     **/
     public void jvnInvalidateReader(int joi) throws RemoteException, JvnException {
         objects.get(joi).jvnInvalidateReader();
     }
 
-    /**
-     * Invalidate the Write lock of the JVN object identified by id
-     *
-     * @param joi the JVN object identification
-     * @return the current JVN object state
-     * @throws RemoteException Java RMI exception
-     * @throws JvnException    JVN exception
-     **/
     public Serializable jvnInvalidateWriter(int joi) throws RemoteException, JvnException {
         return objects.get(joi).jvnInvalidateWriter();
     }
 
-    /**
-     * Reduce the Write lock of the JVN object identified by id
-     *
-     * @param joi the JVN object identification
-     * @return the current JVN object state
-     * @throws RemoteException Java RMI exception
-     * @throws JvnException    JVN exception
-     **/
     public Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException {
         return objects.get(joi).jvnInvalidateWriterForReader();
     }

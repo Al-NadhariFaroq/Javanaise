@@ -8,15 +8,15 @@ public class JvnObjectData {
     private final int joi;
     private JvnObject jo;
     private final List<String> names;
-    private final Hashtable<JvnRemoteServer, State> servers;
+    private final Hashtable<JvnRemoteServer, JvnLockState> servers;
 
     JvnObjectData(int joi, JvnObject jo, String jon, JvnRemoteServer js) {
         this.joi = joi;
         this.jo = jo;
-        names = new ArrayList<>();
-        names.add(jon);
-        servers = new Hashtable<>();
-        servers.put(js, State.NL);
+        this.names = new ArrayList<>();
+        this.names.add(jon);
+        this.servers = new Hashtable<>();
+        this.servers.put(js, JvnLockState.W);
     }
 
     public int getJvnObjectId() {
@@ -41,7 +41,7 @@ public class JvnObjectData {
         }
     }
 
-    public State getServerLock(JvnRemoteServer js) {
+    public JvnLockState getServerLock(JvnRemoteServer js) {
         return servers.get(js);
     }
 
@@ -51,7 +51,7 @@ public class JvnObjectData {
 
     public void addServer(JvnRemoteServer js) {
         if (!servers.containsKey(js)) {
-            servers.put(js, State.NL);
+            servers.put(js, JvnLockState.NL);
         }
     }
 
@@ -59,15 +59,15 @@ public class JvnObjectData {
         servers.remove(js);
     }
 
-    public void updateLock(JvnRemoteServer js, State lock) {
+    public void updateLock(JvnRemoteServer js, JvnLockState lock) {
         if (servers.containsKey(js)) {
             servers.put(js, lock);
         }
     }
 
     public JvnRemoteServer findWriteLockServer() {
-        for(JvnRemoteServer server : servers.keySet()) {
-            if (State.W.equals(servers.get(server))) {
+        for (JvnRemoteServer server : servers.keySet()) {
+            if (JvnLockState.W.equals(servers.get(server))) {
                 return server;
             }
         }
@@ -77,7 +77,7 @@ public class JvnObjectData {
     public List<JvnRemoteServer> findReadLockServers() {
         List<JvnRemoteServer> list = new ArrayList<>();
         for (JvnRemoteServer server : servers.keySet()) {
-            if (servers.get(server).equals(State.R)) {
+            if (servers.get(server).equals(JvnLockState.R)) {
                 list.add(server);
             }
         }
@@ -86,14 +86,16 @@ public class JvnObjectData {
 
     @Override
     public String toString() {
-        StringBuilder txt = new StringBuilder(joi + " (");
+        StringBuilder txt = new StringBuilder("joi: " + joi + " (");
         for (String name : names) {
             txt.append(name).append(", ");
         }
-        txt.append("): ").append(servers.size()).append(" servers [");
-        for (State state : servers.values()) {
-            txt.append(state).append(", ");
+        txt.delete(txt.length()-2, txt.length());
+        txt.append("): shared with ").append(servers.size()).append(" servers [");
+        for (JvnLockState jvnLockState : servers.values()) {
+            txt.append(jvnLockState).append(", ");
         }
+        txt.delete(txt.length()-2, txt.length());
         txt.append("]");
         return txt.toString();
     }

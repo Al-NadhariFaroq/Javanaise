@@ -1,16 +1,17 @@
 /*
  * JAVANAISE API
  * JvnRemoteCoord interface
- * This interface defines the remote interface provided by the Javanaise coordinator
+ * This interface defines the remote interface provided by the Javanaise coordinator.
  */
 
 package jvn;
 
-import java.rmi.*;
-import java.io.*;
+import java.io.Serializable;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
- * Remote Interface of the JVN Coordinator
+ * Remote Interface of the JVN Coordinator.
  */
 public interface JvnRemoteCoord extends Remote {
 	/**

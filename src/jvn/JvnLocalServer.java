@@ -1,8 +1,8 @@
 /*
  * JAVANAISE API
  * JvnLocalServer interface
- * Defines the local interface provided by a JVN server
- * An application uses the Javanaise service through the local interface provided by the JVN server
+ * Defines the local interface provided by a JVN server.
+ * An application uses the Javanaise service through the local interface provided by the JVN server.
  */
 
 package jvn;
