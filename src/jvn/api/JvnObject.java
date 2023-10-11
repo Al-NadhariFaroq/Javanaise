@@ -2,7 +2,9 @@
  * JAVANAISE API
  */
 
-package jvn;
+package jvn.api;
+
+import jvn.JvnException;
 
 import java.io.Serializable;
 

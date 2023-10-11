@@ -5,7 +5,9 @@
  * An application uses the Javanaise service through the local interface provided by the JVN server.
  */
 
-package jvn;
+package jvn.api;
+
+import jvn.JvnException;
 
 import java.io.Serializable;
 
