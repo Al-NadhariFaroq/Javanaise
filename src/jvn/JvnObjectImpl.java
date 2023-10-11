@@ -46,11 +46,9 @@ public class JvnObjectImpl implements JvnObject {
             case WC:
                 jol = JvnLockState.RWC;
                 break;
-            case R:
-                throw new JvnException("Unable to read lock: the object is already lock for reading");
-            case W:
-                throw new JvnException("Unable to read lock: the object is currently lock for writing");
-        }
+            default:
+                break;
+            }
     }
 
     public synchronized void jvnLockWrite() throws JvnException {
@@ -65,8 +63,8 @@ public class JvnObjectImpl implements JvnObject {
             case RWC:
                 jol = JvnLockState.W;
                 break;
-            case W:
-                throw new JvnException("Unable to write lock: the object is already lock for writing");
+            default:
+                break;
         }
     }
 
@@ -80,7 +78,7 @@ public class JvnObjectImpl implements JvnObject {
                 jol = JvnLockState.WC;
                 break;
             default:
-                throw new JvnException("Unable to unlock: the object is already unlock");
+                break;
         }
         this.notifyAll();
     }

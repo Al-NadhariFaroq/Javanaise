@@ -19,8 +19,8 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private int nextId;
     private final Hashtable<Integer, JvnObjectData> objects;
+    private int nextId;
 
     /**
      * Default constructor.
@@ -52,32 +52,34 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
         for (JvnObjectData curData : objects.values()) {
             if (curData.containsName(jon)) {
                 data = curData;
+                data.addServer(js);
+                jvnLockWrite(data.getJvnObjectId(),js);
                 break;
             }
         }
-        if (data == null) {
-            return null;
-        }
-        data.addServer(js);
-        return data.getJvnObject();
+
+        return data != null ? data.getJvnObject() : null;
     }
 
     public synchronized Serializable jvnLockRead(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
         JvnObjectData objectData = objects.get(joi);
-
         JvnRemoteServer serverW = objectData.findWriteLockServer();
         if (serverW != null) {
-            objectData.setJvnObject(new JvnObjectImpl(serverW.jvnInvalidateWriterForReader(joi), joi));
-            objectData.updateLock(serverW, JvnLockState.R);
+            if(serverW.equals(js)){
+                objectData.setJvnObject(new JvnObjectImpl(serverW.jvnInvalidateWriterForReader(joi), joi));
+                objectData.updateLock(serverW, JvnLockState.R);
+            }
+            else{
+                objectData.setJvnObject(new JvnObjectImpl(serverW.jvnInvalidateWriter(joi), joi));
+                objectData.updateLock(serverW, JvnLockState.NL);
+            }
         }
-
         objectData.updateLock(js, JvnLockState.R);
         return objectData.getJvnObject().jvnGetSharedObject();
     }
 
     public synchronized Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
         JvnObjectData objectData = objects.get(joi);
-
         JvnRemoteServer serverW = objectData.findWriteLockServer();
         if (serverW != null) {
             objectData.setJvnObject(new JvnObjectImpl(serverW.jvnInvalidateWriter(joi), joi));
@@ -90,7 +92,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord 
                 }
             }
         }
-
         objectData.updateLock(js, JvnLockState.W);
         return objectData.getJvnObject().jvnGetSharedObject();
     }
