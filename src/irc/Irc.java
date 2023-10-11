@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import jvn.*;
+import jvn.api.JvnObject;
 
 public class Irc {
 	public TextArea text;

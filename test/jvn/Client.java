@@ -1,5 +1,8 @@
 package jvn;
 
+import jvn.api.JvnObject;
+import jvn.api.JvnRemoteCoord;
+
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;

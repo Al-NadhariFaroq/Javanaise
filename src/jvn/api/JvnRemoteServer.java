@@ -5,7 +5,9 @@
  * This interface is intended to be invoked by the Javanaise coordinator.
  */
 
-package jvn;
+package jvn.api;
+
+import jvn.JvnException;
 
 import java.io.Serializable;
 import java.rmi.Remote;

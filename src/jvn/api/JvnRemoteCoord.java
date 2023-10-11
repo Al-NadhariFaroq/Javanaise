@@ -4,7 +4,9 @@
  * This interface defines the remote interface provided by the Javanaise coordinator.
  */
 
-package jvn;
+package jvn.api;
+
+import jvn.JvnException;
 
 import java.io.Serializable;
 import java.rmi.Remote;
