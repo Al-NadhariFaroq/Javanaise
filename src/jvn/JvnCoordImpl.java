@@ -6,6 +6,10 @@
 
 package jvn;
 
+import jvn.api.JvnObject;
+import jvn.api.JvnRemoteCoord;
+import jvn.api.JvnRemoteServer;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.rmi.RemoteException;

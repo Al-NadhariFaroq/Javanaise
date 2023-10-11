@@ -1,5 +1,8 @@
 package jvn;
 
+import jvn.api.JvnObject;
+import jvn.api.JvnRemoteServer;
+
 import java.util.HashSet;
 import java.util.Set;
 

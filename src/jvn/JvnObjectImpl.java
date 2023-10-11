@@ -6,6 +6,8 @@
 
 package jvn;
 
+import jvn.api.JvnObject;
+
 import java.io.Serial;
 import java.io.Serializable;
 

@@ -5,8 +5,8 @@
 package irc;
 
 import jvn.JvnException;
-import jvn.JvnLocalServer;
-import jvn.JvnObject;
+import jvn.api.JvnLocalServer;
+import jvn.api.JvnObject;
 import jvn.JvnServerImpl;
 
 import java.awt.Button;

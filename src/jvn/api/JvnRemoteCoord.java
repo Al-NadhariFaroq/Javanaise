@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
 /**
  * Remote Interface of the JVN Coordinator.
  */
-interface JvnRemoteCoord extends Remote {
+public interface JvnRemoteCoord extends Remote {
 	/**
 	 * Allocate a NEW JVN object id (usually allocated to a newly created JVN object)
 	 *
