@@ -9,120 +9,124 @@ package jvn;
 import java.io.Serial;
 import java.io.Serializable;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 /**
  * Implementation of the JVN Coordinator.
  */
-public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
-    @Serial
-    private static final long serialVersionUID = 1L;
+class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
+	@Serial
+	private static final long serialVersionUID = 1L;
 
-    private int nextId;
-    private final Hashtable<Integer, JvnObjectData> objects;
+	private int nextId;
 
-    /**
-     * Default constructor.
-     *
-     * @throws RemoteException Java RMI exception
-     * @throws JvnException JVN exception
-     **/
-    public JvnCoordImpl() throws RemoteException, JvnException {
-        objects = new Hashtable<>();
-        nextId = 0;
-    }
+	private final Hashtable<String, Integer> names;
+	private final Hashtable<Integer, JvnObjectData> objects;
 
-    public synchronized int jvnGetObjectId() throws RemoteException, JvnException {
-        return ++nextId;
-    }
+	/**
+	 * Default constructor.
+	 *
+	 * @throws RemoteException Java RMI exception
+	 * @throws JvnException    JVN exception
+	 **/
+	public JvnCoordImpl() throws RemoteException, JvnException {
+		nextId = 0;
+		objects = new Hashtable<>();
+		names = new Hashtable<>();
 
-    public synchronized void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws RemoteException, JvnException {
-        int joi = jo.jvnGetObjectId();
-        if (objects.get(joi) == null) {
-            JvnObjectData data = new JvnObjectData(joi, jo, jon, js);
-            objects.put(joi, data);
-        } else {
-            objects.get(joi).addName(jon);
-        }
-    }
+		// Bind the coordinator remote object's stub in the RMI registry
+		Registry registry = LocateRegistry.createRegistry(1224);
+		registry.rebind("Coordinator", this);
+		System.out.println("Javanaise central coordinator is ready.");
+	}
 
-    public synchronized JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws RemoteException, JvnException {
-        JvnObjectData data = null;
-        for (JvnObjectData curData : objects.values()) {
-            if (curData.containsName(jon)) {
-                data = curData;
-                break;
-            }
-        }
-        if (data == null) {
-            return null;
-        }
-        data.addServer(js);
-        return data.getJvnObject();
-    }
+	public synchronized int jvnGetObjectId() throws RemoteException, JvnException {
+		return nextId++;
+	}
 
-    public synchronized Serializable jvnLockRead(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
-        JvnObjectData objectData = objects.get(joi);
+	public synchronized void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js)
+	throws RemoteException, JvnException {
+		if (jo == null) {
+			throw new JvnException("Unable to register the object: invalid null object");
+		} else if (names.containsKey(jon)) {
+			throw new JvnException("Unable to register the object: the symbolic name '" + jon + "' is already use");
+		}
 
-        JvnRemoteServer serverW = objectData.findWriteLockServer();
-        if (serverW != null) {
-            objectData.setJvnObject(new JvnObjectImpl(serverW.jvnInvalidateWriterForReader(joi), joi));
-            objectData.updateLock(serverW, JvnLockState.R);
-        }
+		int joi = jo.jvnGetObjectId();
+		names.put(jon, joi);
 
-        objectData.updateLock(js, JvnLockState.R);
-        return objectData.getJvnObject().jvnGetSharedObject();
-    }
+		if (!objects.containsKey(joi)) {
+			objects.put(joi, new JvnObjectData(jo, js));
+		}
 
-    public synchronized Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
-        JvnObjectData objectData = objects.get(joi);
+		System.out.println("Registration of object " + jo.jvnGetObjectId() + " as '" + jon + "'");
+	}
 
-        JvnRemoteServer serverW = objectData.findWriteLockServer();
-        if (serverW != null) {
-            objectData.setJvnObject(new JvnObjectImpl(serverW.jvnInvalidateWriter(joi), joi));
-            objectData.updateLock(serverW, JvnLockState.NL);
-        } else {
-            for (JvnRemoteServer server : objectData.findReadLockServers()) {
-                if (!server.equals(js)) {
-                    server.jvnInvalidateReader(joi);
-                    objectData.updateLock(server, JvnLockState.NL);
-                }
-            }
-        }
+	public synchronized JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws RemoteException, JvnException {
+		if (!names.containsKey(jon)) {
+			System.out.println("Not found object named '" + jon + "'");
+			return null;
+		}
 
-        objectData.updateLock(js, JvnLockState.W);
-        return objectData.getJvnObject().jvnGetSharedObject();
-    }
+		System.out.println("Found the object named '" + jon + "'");
+		JvnObjectData data = objects.get(names.get(jon));
+		data.getServers().add(js);
+		return data.getJvnObject();
+	}
 
-    public synchronized void jvnTerminate(JvnRemoteServer js) throws RemoteException, JvnException {
-        for (JvnObjectData data : objects.values()) {
-            if (data.containsServer(js)) {
-                JvnLockState lock = data.getServerLock(js);
-                switch (lock) {
-                    case R:
-                        js.jvnInvalidateReader(data.getJvnObjectId());
-                        break;
-                    case W:
-                        data.setJvnObject(new JvnObjectImpl(js.jvnInvalidateWriter(data.getJvnObjectId()), data.getJvnObjectId()));
-                        break;
-                    default:
-                        break;
-                }
-            }
-            data.removeServer(js);
-        }
-    }
+	public synchronized Serializable jvnLockRead(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
+		JvnObjectData data = objects.get(joi);
 
-    @Override
-    public String toString() {
-        StringBuilder txt = new StringBuilder();
-        for (JvnObjectData data : objects.values()) {
-            txt.append(data.toString()).append("\n");
-        }
-        if (!objects.values().isEmpty()) {
-            txt.delete(txt.length() - 1, txt.length());
-        }
-        return txt.toString();
-    }
+		JvnRemoteServer writeServer = data.getWriteServer();
+		if (writeServer != null) {
+			Serializable jos = writeServer.jvnInvalidateWriterForReader(joi);
+			data.setJvnObject(new JvnObjectImpl(jos, joi));
+			data.setWriteServer(null);
+		}
+
+		System.out.println("Object " + joi + " lock for reading");
+		data.getReadServers().add(js);
+		return data.getJvnObject().jvnGetSharedObject();
+	}
+
+	public synchronized Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
+		JvnObjectData data = objects.get(joi);
+
+		Iterator<JvnRemoteServer> readServersIt = data.getReadServers().iterator();
+		while (readServersIt.hasNext()) {
+			JvnRemoteServer readServer = readServersIt.next();
+			if (!readServer.equals(js)) {
+				readServer.jvnInvalidateReader(joi);
+			}
+			readServersIt.remove();
+		}
+
+		JvnRemoteServer writeServer = data.getWriteServer();
+		if (writeServer != null) {
+			Serializable jos = writeServer.jvnInvalidateWriterForReader(joi);
+			data.setJvnObject(new JvnObjectImpl(jos, joi));
+			data.setWriteServer(null);
+		}
+
+		System.out.println("Object " + joi + " lock for writing");
+		data.setWriteServer(js);
+		return data.getJvnObject().jvnGetSharedObject();
+	}
+
+	public synchronized void jvnTerminate(JvnRemoteServer js) throws RemoteException, JvnException {
+		for (JvnObjectData data : objects.values()) {
+			if (data.getWriteServer() == js) {
+				Serializable jos = js.jvnInvalidateWriter(data.getJvnObject().jvnGetObjectId());
+				data.setJvnObject(new JvnObjectImpl(jos, data.getJvnObject().jvnGetObjectId()));
+				data.setWriteServer(null);
+			}
+			data.getReadServers().remove(js);
+			data.getServers().remove(js);
+		}
+		System.out.println("Terminate server");
+	}
 }

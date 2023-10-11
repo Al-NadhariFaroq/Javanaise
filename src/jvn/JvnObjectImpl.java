@@ -13,143 +13,159 @@ import java.io.Serializable;
  * Implementation of a JVN object. A JVN object is used to acquire read/write locks to access a given shared object.
  */
 public class JvnObjectImpl implements JvnObject {
-    @Serial
-    private static final long serialVersionUID = 1L;
+	@Serial
+	private static final long serialVersionUID = 1L;
 
-    private final int joi;
-    private Serializable jos;
-    private JvnLockState jol;
+	enum JvnLockState {NL, R, W, RC, WC, RWC}
 
-    public JvnObjectImpl(Serializable jos, int joi) {
-        this.joi = joi;
-        this.jos = jos;
-        this.jol = JvnLockState.W;
-    }
+	private final int jvnObjectId;
+	private Serializable jvnObjectState;
+	private JvnLockState jvnObjectLock;
 
-    public synchronized int jvnGetObjectId() throws JvnException {
-        return joi;
-    }
+	public JvnObjectImpl(Serializable jos, int joi) {
+		jvnObjectId = joi;
+		jvnObjectState = jos;
+		jvnObjectLock = JvnLockState.NL;
+	}
 
-    public synchronized Serializable jvnGetSharedObject() throws JvnException {
-        return jos;
-    }
+	public synchronized int jvnGetObjectId() throws JvnException {
+		return jvnObjectId;
+	}
 
-    public synchronized void jvnLockRead() throws JvnException {
-        switch (jol) {
-            case NL:
-                jos = JvnServerImpl.jvnGetServer().jvnLockRead(joi);
-                jol = JvnLockState.R;
-                break;
-            case RC:
-                jol = JvnLockState.R;
-                break;
-            case WC:
-                jol = JvnLockState.RWC;
-                break;
-            case R:
-                throw new JvnException("Unable to read lock: the object is already lock for reading");
-            case W:
-                throw new JvnException("Unable to read lock: the object is currently lock for writing");
-        }
-    }
+	public synchronized Serializable jvnGetSharedObject() throws JvnException {
+		/*if (jvnObjectLock.equals(JvnLockState.R) || jvnObjectLock.equals(JvnLockState.W) ||
+			jvnObjectLock.equals(JvnLockState.RWC)) {*/
+		return jvnObjectState;
+		/*} else {
+			throw new JvnException("Unable to get the shared object: the object is not locked");
+		}*/
+	}
 
-    public synchronized void jvnLockWrite() throws JvnException {
-        switch (jol) {
-            case NL:
-            case R:
-            case RC:
-                jos = JvnServerImpl.jvnGetServer().jvnLockWrite(joi);
-                jol = JvnLockState.W;
-                break;
-            case WC:
-            case RWC:
-                jol = JvnLockState.W;
-                break;
-            case W:
-                throw new JvnException("Unable to write lock: the object is already lock for writing");
-        }
-    }
+	public synchronized void jvnLockRead() throws JvnException {
+		switch (jvnObjectLock) {
+			case NL:
+				jvnObjectState = JvnServerImpl.jvnGetServer().jvnLockRead(jvnObjectId);
+				jvnObjectLock = JvnLockState.R;
+				break;
+			case RC:
+				jvnObjectLock = JvnLockState.R;
+				break;
+			case WC:
+				jvnObjectLock = JvnLockState.RWC;
+				break;
+			case R:
+				throw new JvnException("Unable to read lock: the object is already lock for reading");
+			case W:
+				throw new JvnException("Unable to read lock: the object is currently lock for writing");
+		}
+		System.out.println("Object lock for reading");
+	}
 
-    public synchronized void jvnUnLock() throws JvnException {
-        switch (jol) {
-            case R:
-                jol = JvnLockState.RC;
-                break;
-            case W:
-            case RWC:
-                jol = JvnLockState.WC;
-                break;
-            default:
-                throw new JvnException("Unable to unlock: the object is already unlock");
-        }
-        this.notifyAll();
-    }
+	public synchronized void jvnLockWrite() throws JvnException {
+		switch (jvnObjectLock) {
+			case NL:
+			case R:
+			case RC:
+				jvnObjectState = JvnServerImpl.jvnGetServer().jvnLockWrite(jvnObjectId);
+				jvnObjectLock = JvnLockState.W;
+				break;
+			case WC:
+			case RWC:
+				jvnObjectLock = JvnLockState.W;
+				break;
+			case W:
+				throw new JvnException("Unable to write lock: the object is already lock for writing");
+		}
+		System.out.println("Object lock for writing");
+	}
 
-    public synchronized void jvnInvalidateReader() throws JvnException {
-        switch (jol) {
-            case R:
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    throw new JvnException(e.toString());
-                }
-                jol = JvnLockState.NL;
-                break;
-            case RC:
-                jol = JvnLockState.NL;
-                break;
-            case NL:
-                throw new JvnException("Unable to invalidate read lock: the object is currently unlock");
-            case W:
-            case WC:
-            case RWC:
-                throw new JvnException("Unable to invalidate read lock: the object is currently lock for writing");
-        }
-    }
+	public synchronized void jvnUnLock() throws JvnException {
+		switch (jvnObjectLock) {
+			case R:
+				jvnObjectLock = JvnLockState.RC;
+				break;
+			case W:
+			case RWC:
+				jvnObjectLock = JvnLockState.WC;
+				break;
+			default:
+				throw new JvnException("Unable to unlock: the object is already unlock");
+		}
+		System.out.println("Object unlock");
+		this.notifyAll();
+	}
 
-    public synchronized Serializable jvnInvalidateWriter() throws JvnException {
-        switch (jol) {
-            case W:
-            case RWC:
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    throw new JvnException(e.toString());
-                }
-                jol = JvnLockState.NL;
-                break;
-            case WC:
-                jol = JvnLockState.NL;
-                break;
-            case NL:
-                throw new JvnException("Unable to invalidate write lock: the object is currently unlock");
-            case R:
-            case RC:
-                throw new JvnException("Unable to invalidate write lock: the object is currently lock for reading");
-        }
-        return jos;
-    }
+	/**
+	 * Wait to be notified by the unlock method.
+	 *
+	 * @throws JvnException JVN exception
+	 */
+	private void waitUnlock() throws JvnException {
+		try {
+			this.wait();
+		} catch (InterruptedException e) {
+			throw new JvnException(e.toString());
+		}
+	}
 
-    public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
-        switch (jol) {
-            case W:
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    throw new JvnException(e.toString());
-                }
-                jol = JvnLockState.R;
-                break;
-            case WC:
-            case RWC:
-                jol = JvnLockState.R;
-                break;
-            case NL:
-                throw new JvnException("Unable to invalidate write lock: the object is currently unlock");
-            case R:
-            case RC:
-                throw new JvnException("Unable to invalidate write lock: the object is already lock for reading");
-        }
-        return jos;
-    }
+	public synchronized void jvnInvalidateReader() throws JvnException {
+		switch (jvnObjectLock) {
+			case R:
+				waitUnlock();
+				jvnObjectLock = JvnLockState.NL;
+				break;
+			case RC:
+				jvnObjectLock = JvnLockState.NL;
+				break;
+			case NL:
+				throw new JvnException("Unable to invalidate read lock: the object is currently unlock");
+			case W:
+			case WC:
+			case RWC:
+				throw new JvnException("Unable to invalidate read lock: the object is currently lock for writing");
+		}
+		System.out.println("Invalidate read lock");
+	}
+
+	public synchronized Serializable jvnInvalidateWriter() throws JvnException {
+		switch (jvnObjectLock) {
+			case W:
+			case RWC:
+				waitUnlock();
+				jvnObjectLock = JvnLockState.NL;
+				break;
+			case WC:
+				jvnObjectLock = JvnLockState.NL;
+				break;
+			case NL:
+				throw new JvnException("Unable to invalidate write lock: the object is currently unlock");
+			case R:
+			case RC:
+				throw new JvnException("Unable to invalidate write lock: the object is currently lock for reading");
+		}
+		System.out.println("Invalidate write lock");
+		return jvnObjectState;
+	}
+
+	public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
+		switch (jvnObjectLock) {
+			case W:
+				waitUnlock();
+				jvnObjectLock = JvnLockState.R;
+				break;
+			case WC:
+				jvnObjectLock = JvnLockState.RC;
+				break;
+			case RWC:
+				jvnObjectLock = JvnLockState.R;
+				break;
+			case NL:
+				throw new JvnException("Unable to invalidate write lock: the object is currently unlock");
+			case R:
+			case RC:
+				throw new JvnException("Unable to invalidate write lock: the object is already lock for reading");
+		}
+		System.out.println("Invalidate write lock for read lock");
+		return jvnObjectState;
+	}
 }

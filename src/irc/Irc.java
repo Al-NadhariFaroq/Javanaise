@@ -4,10 +4,21 @@
 
 package irc;
 
-import java.awt.*;
-import java.awt.event.*;
+import jvn.JvnException;
+import jvn.JvnLocalServer;
+import jvn.JvnObject;
+import jvn.JvnServerImpl;
 
-import jvn.*;
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.TextArea;
+import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class Irc {
 	public TextArea text;
@@ -20,16 +31,15 @@ public class Irc {
 	 **/
 	public static void main(String[] argv) {
 		try {
-
-			// initialize JVN
-			JvnServerImpl js = JvnServerImpl.jvnGetServer();
+			// initialize JVN server
+			JvnLocalServer js = JvnServerImpl.jvnGetServer();
 
 			// look up the IRC object in the JVN server if not found, create it, and register it in the JVN server
 			JvnObject jo = js.jvnLookupObject("IRC");
 			if (jo == null) {
 				jo = js.jvnCreateObject(new Sentence());
-				// after creation, I have a Write lock on the object
-				jo.jvnUnLock();
+				// after creation, I have a write-lock on the object
+				//jo.jvnUnLock();
 				js.jvnRegisterObject("IRC", jo);
 			}
 
@@ -37,6 +47,7 @@ public class Irc {
 			new Irc(jo);
 		} catch (Exception e) {
 			System.out.println("IRC problem : " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -48,6 +59,7 @@ public class Irc {
 	public Irc(JvnObject jo) {
 		sentence = jo;
 		frame = new Frame();
+		frame.addWindowListener(new WindowListener());
 		frame.setLayout(new GridLayout(1, 1));
 		text = new TextArea(10, 60);
 		text.setEditable(false);
@@ -56,10 +68,10 @@ public class Irc {
 		data = new TextField(40);
 		frame.add(data);
 		Button read_button = new Button("read");
-		read_button.addActionListener(new readListener(this));
+		read_button.addActionListener(new ReadListener(this));
 		frame.add(read_button);
 		Button write_button = new Button("write");
-		write_button.addActionListener(new writeListener(this));
+		write_button.addActionListener(new WriteListener(this));
 		frame.add(write_button);
 		frame.setSize(545, 201);
 		text.setBackground(Color.black);
@@ -70,10 +82,10 @@ public class Irc {
 /**
  * Internal class to manage user events (read) on the Chat application
  **/
-class readListener implements ActionListener {
+class ReadListener implements ActionListener {
 	Irc irc;
 
-	public readListener(Irc i) {
+	public ReadListener(Irc i) {
 		irc = i;
 	}
 
@@ -96,6 +108,7 @@ class readListener implements ActionListener {
 			irc.text.append(s + "\n");
 		} catch (JvnException je) {
 			System.out.println("IRC problem : " + je.getMessage());
+			je.printStackTrace();
 		}
 	}
 }
@@ -103,10 +116,10 @@ class readListener implements ActionListener {
 /**
  * Internal class to manage user events (write) on the Chat application
  **/
-class writeListener implements ActionListener {
+class WriteListener implements ActionListener {
 	Irc irc;
 
-	public writeListener(Irc i) {
+	public WriteListener(Irc i) {
 		irc = i;
 	}
 
@@ -128,6 +141,20 @@ class writeListener implements ActionListener {
 			irc.sentence.jvnUnLock();
 		} catch (JvnException je) {
 			System.out.println("IRC problem  : " + je.getMessage());
+			je.printStackTrace();
+		}
+	}
+}
+
+class WindowListener extends WindowAdapter {
+
+	@Override
+	public void windowClosing(WindowEvent we) {
+		try {
+			JvnServerImpl.jvnGetServer().jvnTerminate();
+			System.exit(0);
+		} catch (JvnException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }
