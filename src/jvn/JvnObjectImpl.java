@@ -18,16 +18,14 @@ public class JvnObjectImpl implements JvnObject {
 	@Serial
 	private static final long serialVersionUID = 1L;
 
-	enum JvnLockState {NL, R, W, RC, WC, RWC}
-
 	private final int jvnObjectId;
 	private Serializable jvnObjectState;
 	private JvnLockState jvnObjectLock;
 
-	public JvnObjectImpl(Serializable jos, int joi) {
+	JvnObjectImpl(Serializable jos, int joi, JvnLockState jol) {
 		jvnObjectId = joi;
 		jvnObjectState = jos;
-		jvnObjectLock = JvnLockState.NL;
+		jvnObjectLock = jol;
 	}
 
 	public synchronized int jvnGetObjectId() throws JvnException {
@@ -153,7 +151,7 @@ public class JvnObjectImpl implements JvnObject {
 		switch (jvnObjectLock) {
 			case W:
 				waitUnlock();
-				jvnObjectLock = JvnLockState.R;
+				jvnObjectLock = JvnLockState.RC;
 				break;
 			case WC:
 				jvnObjectLock = JvnLockState.RC;

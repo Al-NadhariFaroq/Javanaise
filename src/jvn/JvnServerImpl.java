@@ -70,7 +70,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 
 	public JvnObject jvnCreateObject(Serializable o) throws JvnException {
 		try {
-			return new JvnObjectImpl(o, coordinator.jvnGetObjectId());
+			return new JvnObjectImpl(o, coordinator.jvnGetObjectId(), JvnLockState.W);
 		} catch (RemoteException e) {
 			throw new JvnException("Error creating the Javanaise object!\n" + e);
 		}

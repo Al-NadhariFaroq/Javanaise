@@ -17,7 +17,7 @@ class JvnObjectData {
 		servers = new HashSet<>();
 		servers.add(js);
 		readServers = new HashSet<>();
-		writeServer = null;
+		writeServer = js;
 	}
 
 	JvnObject getJvnObject() {

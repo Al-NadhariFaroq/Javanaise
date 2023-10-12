@@ -64,7 +64,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		names.put(jon, joi);
 
 		if (!objects.containsKey(joi)) {
-			objects.put(joi, new JvnObjectData(jo, js));
+			objects.put(joi, new JvnObjectData(new JvnObjectImpl(jo.jvnGetSharedObject(), joi, JvnLockState.NL), js));
 		}
 
 		System.out.println("Registration of object " + jo.jvnGetObjectId() + " as '" + jon + "'");
@@ -88,7 +88,8 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		JvnRemoteServer writeServer = data.getWriteServer();
 		if (writeServer != null) {
 			Serializable jos = writeServer.jvnInvalidateWriterForReader(joi);
-			data.setJvnObject(new JvnObjectImpl(jos, joi));
+			data.setJvnObject(new JvnObjectImpl(jos, joi, JvnLockState.NL));
+			data.getReadServers().add(writeServer);
 			data.setWriteServer(null);
 		}
 
@@ -111,8 +112,8 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 		JvnRemoteServer writeServer = data.getWriteServer();
 		if (writeServer != null) {
-			Serializable jos = writeServer.jvnInvalidateWriterForReader(joi);
-			data.setJvnObject(new JvnObjectImpl(jos, joi));
+			Serializable jos = writeServer.jvnInvalidateWriter(joi);
+			data.setJvnObject(new JvnObjectImpl(jos, joi, JvnLockState.NL));
 			data.setWriteServer(null);
 		}
 
@@ -125,7 +126,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		for (JvnObjectData data : objects.values()) {
 			if (data.getWriteServer() == js) {
 				Serializable jos = js.jvnInvalidateWriter(data.getJvnObject().jvnGetObjectId());
-				data.setJvnObject(new JvnObjectImpl(jos, data.getJvnObject().jvnGetObjectId()));
+				data.setJvnObject(new JvnObjectImpl(jos, data.getJvnObject().jvnGetObjectId(), JvnLockState.NL));
 				data.setWriteServer(null);
 			}
 			data.getReadServers().remove(js);
