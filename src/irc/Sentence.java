@@ -1,26 +1,10 @@
-/*
- * Sentence class : used for keeping the text exchanged between users during a chat application
- */
-
 package irc;
 
-import java.io.Serial;
+import java.io.Serializable;
 
-public class Sentence implements java.io.Serializable {
-	@Serial
-	private static final long serialVersionUID = 1L;
+public interface Sentence extends Serializable {
 
-	String data;
+	void write(String text);
 
-	public Sentence() {
-		data = "";
-	}
-
-	public void write(String text) {
-		data = text;
-	}
-
-	public String read() {
-		return data;
-	}
+	String read();
 }

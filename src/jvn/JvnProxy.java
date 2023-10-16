@@ -1,6 +1,5 @@
 package jvn;
 
-import irc.Sentence;
 import jvn.api.JvnLocalServer;
 import jvn.api.JvnObject;
 
@@ -18,7 +17,7 @@ public class JvnProxy implements InvocationHandler {
 		// look up the IRC object in the JVN server if not found, create it, and register it in the JVN server
 		jo = js.jvnLookupObject("IRC");
 		if (jo == null) {
-			jo = js.jvnCreateObject(new Sentence());
+			jo = js.jvnCreateObject(jos);
 			// after creation, I have a write-lock on the object
 			jo.jvnUnLock();
 			js.jvnRegisterObject("IRC", jo);
@@ -33,15 +32,16 @@ public class JvnProxy implements InvocationHandler {
 	}
 
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		String methodName = method.getName();
-		if (methodName.equals("read")) {
-			jo.jvnLockRead();
-		} else if (methodName.equals("write")) {
-			jo.jvnLockWrite();
-		} else {
-			throw new JvnException("Error");
+		switch (method.getName()) {
+			case "read":
+				jo.jvnLockRead();
+				break;
+			case "write":
+				jo.jvnLockWrite();
+				break;
+			default:
+				throw new JvnException("Invoke error: unknown method name");
 		}
-
 		Object ret = method.invoke(jo.jvnGetSharedObject(), args);
 		jo.jvnUnLock();
 		return ret;

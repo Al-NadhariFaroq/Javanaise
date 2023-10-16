@@ -6,8 +6,6 @@ package irc;
 
 import jvn.JvnException;
 import jvn.JvnProxy;
-import jvn.api.JvnLocalServer;
-import jvn.api.JvnObject;
 import jvn.JvnServerImpl;
 
 import java.awt.Button;
@@ -33,7 +31,7 @@ public class Irc {
 	public static void main(String[] argv) {
 		try {
 			// create a proxy to access at a sentence
-			Sentence sentence = (Sentence) JvnProxy.newInstance(new Sentence());
+			Sentence sentence = (Sentence) JvnProxy.newInstance(new SentenceImpl());
 
 			// create the graphical part of the Chat application
 			new Irc(sentence);
