@@ -124,7 +124,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 	public synchronized void jvnTerminate(JvnRemoteServer js) throws RemoteException, JvnException {
 		for (JvnObjectData data : objects.values()) {
-			if (data.getWriteServer() == js) {
+			if (js.equals(data.getWriteServer())) {
 				Serializable jos = js.jvnInvalidateWriter(data.getJvnObject().jvnGetObjectId());
 				data.setJvnObject(new JvnObjectImpl(jos, data.getJvnObject().jvnGetObjectId(), JvnLockState.NL));
 				data.setWriteServer(null);
