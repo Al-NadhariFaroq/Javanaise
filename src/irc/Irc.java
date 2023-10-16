@@ -31,7 +31,7 @@ public class Irc {
 	public static void main(String[] argv) {
 		try {
 			// create a proxy to access at a sentence
-			Sentence sentence = (Sentence) JvnProxy.newInstance(new SentenceImpl());
+			Sentence sentence = (Sentence) JvnProxy.newInstance(new SentenceImpl(), "IRC");
 
 			// create the graphical part of the Chat application
 			new Irc(sentence);

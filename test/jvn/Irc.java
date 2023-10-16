@@ -35,7 +35,7 @@ public class Irc {
 			Random rand = new Random();
 
 			// create a proxy to access at a sentence
-			Sentence sentence = (Sentence) JvnProxy.newInstance(new SentenceImpl());
+			Sentence sentence = (Sentence) JvnProxy.newInstance(new SentenceImpl(), "IRC");
 
 			// create the graphical part of the Chat application
 			Irc irc = new Irc(sentence);
