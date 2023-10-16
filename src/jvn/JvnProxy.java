@@ -2,31 +2,36 @@ package jvn;
 
 import jvn.api.JvnObject;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 public class JvnProxy implements InvocationHandler {
-	private final JvnObject jvnObject;
+	private JvnObject jo;
 
-	public JvnProxy(JvnObject jo) {
-		this.jvnObject = jo;
+	private JvnProxy(JvnObject jo) {
+		this.jo = jo;
 	}
 
-	@Override
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		Object ret;
-		String lockType = method.getName();
+	public static Object newInstance(JvnObject jo) {
+		return java.lang.reflect.Proxy.newProxyInstance(jo.getClass().getClassLoader(),
+														jo.getClass().getInterfaces(),
+														new JvnProxy(jo)
+		);
+	}
 
-		if (lockType.equals("read")) {
-			jvnObject.jvnLockRead();
-		} else if (lockType.equals("write")) {
-			jvnObject.jvnLockWrite();
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		String methodName = method.getName();
+		if (methodName.equals("read")) {
+			jo.jvnLockRead();
+		} else if (methodName.equals("write")) {
+			jo.jvnLockWrite();
 		} else {
 			throw new JvnException("Error");
 		}
 
-		ret = method.invoke(jvnObject.jvnGetSharedObject(), args);
-		jvnObject.jvnUnLock();
+		Object ret = method.invoke(jo.jvnGetSharedObject(), args);
+		jo.jvnUnLock();
 		return ret;
 	}
 }
