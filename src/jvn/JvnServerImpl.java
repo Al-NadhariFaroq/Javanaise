@@ -114,14 +114,17 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	}
 
 	public void jvnInvalidateReader(int joi) throws RemoteException, JvnException {
+		System.out.println("LocalServer invalidate reader");
 		objects.get(joi).jvnInvalidateReader();
 	}
 
 	public Serializable jvnInvalidateWriter(int joi) throws RemoteException, JvnException {
+		System.out.println("LocalServer invalidate write");
 		return objects.get(joi).jvnInvalidateWriter();
 	}
 
 	public Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException {
+		System.out.println("LocalServer invalidate writer for reader");
 		return objects.get(joi).jvnInvalidateWriterForReader();
 	}
 }

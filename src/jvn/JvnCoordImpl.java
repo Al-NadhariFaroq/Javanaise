@@ -38,9 +38,9 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 	 * @throws JvnException    JVN exception
 	 **/
 	public JvnCoordImpl() throws RemoteException, JvnException {
-		nextId = 0;
 		objects = new Hashtable<>();
 		names = new Hashtable<>();
+		nextId = 1;
 
 		// Bind the coordinator remote object's stub in the RMI registry
 		Registry registry = LocateRegistry.createRegistry(1224);
@@ -83,8 +83,8 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 	}
 
 	public synchronized Serializable jvnLockRead(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
+		System.out.println("Read lock demanded");
 		JvnObjectData data = objects.get(joi);
-
 		JvnRemoteServer writeServer = data.getWriteServer();
 		if (writeServer != null) {
 			Serializable jos = writeServer.jvnInvalidateWriterForReader(joi);
@@ -99,6 +99,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 	}
 
 	public synchronized Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
+		System.out.println("Write lock demanded");
 		JvnObjectData data = objects.get(joi);
 
 		Iterator<JvnRemoteServer> readServersIt = data.getReadServers().iterator();

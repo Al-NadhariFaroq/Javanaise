@@ -128,6 +128,7 @@ public class JvnObjectImpl implements JvnObject {
 	}
 
 	public synchronized Serializable jvnInvalidateWriter() throws JvnException {
+		System.out.println("Object Invalidate Write :" + jvnObjectLock);
 		switch (jvnObjectLock) {
 			case W:
 			case RWC:
