@@ -25,14 +25,14 @@ public class JvnProxy implements InvocationHandler {
 		}
 	}
 
-	public static Object newInstance(Serializable jos, String name) throws JvnException {
+	public synchronized static Object newInstance(Serializable jos, String name) throws JvnException {
 		return java.lang.reflect.Proxy.newProxyInstance(jos.getClass().getClassLoader(),
 														jos.getClass().getInterfaces(),
 														new JvnProxy(jos, name)
 		);
 	}
 
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		JvnLockMethod lockType = method.getAnnotation(JvnLockMethod.class);
 		if (lockType != null) {
 			switch (lockType.lockType()) {

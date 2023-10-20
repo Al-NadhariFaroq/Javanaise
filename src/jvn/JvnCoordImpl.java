@@ -17,6 +17,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Scanner;
 
 /**
  * Implementation of the JVN Coordinator.
@@ -32,7 +33,6 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 	private final String SERVER_FILE_STATUS = "status.serv";
 
-
 	/**
 	 * Default constructor.
 	 *
@@ -47,8 +47,9 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		// Bind the coordinator remote object's stub in the RMI registry
 		Registry registry = LocateRegistry.createRegistry(1224);
 		registry.rebind("Coordinator", this);
-		System.out.println("Javanaise central coordinator is ready.");
+
 		restoreStatus();
+		System.out.println("Javanaise central coordinator is ready.");
 	}
 
 	public synchronized int jvnGetObjectId() throws RemoteException, JvnException {
@@ -70,6 +71,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 			objects.put(joi, new JvnObjectData(new JvnObjectImpl(jo.jvnGetSharedObject(), joi, JvnLockState.NL), js));
 		}
 
+		saveStatus();
 		System.out.println("Registration of object " + jo.jvnGetObjectId() + " as '" + jon + "'");
 	}
 
@@ -82,6 +84,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		System.out.println("Found the object named '" + jon + "'");
 		JvnObjectData data = objects.get(names.get(jon));
 		data.getServers().add(js);
+		saveStatus();
 		return data.getJvnObject();
 	}
 
@@ -98,6 +101,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 		System.out.println("Object " + joi + " lock for reading");
 		data.getReadServers().add(js);
+		saveStatus();
 		return data.getJvnObject().jvnGetSharedObject();
 	}
 
@@ -137,41 +141,63 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 			data.getReadServers().remove(js);
 			data.getServers().remove(js);
 		}
+		saveStatus();
 		System.out.println("Terminate server");
 	}
 
-	void saveStatus(){
+	private void saveStatus() {
 		try {
 			FileOutputStream fileOut = new FileOutputStream(SERVER_FILE_STATUS);
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(this);
 			out.close();
 			fileOut.close();
-			System.out.println("Object has been serialized and written to myObject.ser");
+			System.out.println("Object has been serialized and written");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	void restoreStatus(){
+	private void restoreStatus() {
 		try {
 			FileInputStream fileIn = new FileInputStream(SERVER_FILE_STATUS);
-			ObjectInputStream in = new ObjectInputStream(fileIn);
-			JvnCoordImpl loadedObject = (JvnCoordImpl) in.readObject();
 
-			nextId = loadedObject.nextId;
-			objects = loadedObject.objects;
-			names = loadedObject.names;
+			Scanner scanner = new Scanner(System.in);
+			System.out.println("Do you want to restore the coordinator? Y/N");
+			String res = scanner.nextLine();
 
-			in.close();
-			fileIn.close();
-			// Now, 'loadedObject' contains the deserialized object
-		} catch (IOException e){
+			if (res.equalsIgnoreCase("y") || res.equalsIgnoreCase("yes")) {
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				JvnCoordImpl loadedObject = (JvnCoordImpl) in.readObject();
+				in.close();
+				fileIn.close();
 
+				nextId = loadedObject.nextId;
+				objects = loadedObject.objects;
+				names = loadedObject.names;
+
+				for (JvnObjectData data : objects.values()) {
+					for (JvnRemoteServer js : data.getServers()) {
+						try {
+							js.jvnCoordReconnect();
+						} catch (RemoteException e) {
+							for (JvnObjectData data2 : objects.values()) {
+								if (js.equals(data2.getWriteServer())) {
+									data.setWriteServer(null);
+								}
+								data.getReadServers().remove(js);
+								data.getServers().remove(js);
+							}
+						}
+					}
+				}
+
+				System.out.println("Coordinator has been deserialized and read");
+			}
+		} catch (IOException e) {
+			System.out.println("No need to restore the coordinator");
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 	}
-
-
 }

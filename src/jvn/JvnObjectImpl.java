@@ -100,9 +100,11 @@ public class JvnObjectImpl implements JvnObject {
 	 *
 	 * @throws JvnException JVN exception
 	 */
-	private void waitUnlock() throws JvnException {
+	private synchronized void waitUnlock() throws JvnException {
 		try {
+			System.out.println("Thread " + Thread.currentThread().getId() + ": wait for unlock");
 			this.wait();
+			System.out.println("Thread " + Thread.currentThread().getId() + ": no more wait for unlock");
 		} catch (InterruptedException e) {
 			throw new JvnException(e.toString());
 		}

@@ -10,6 +10,7 @@ package jvn.api;
 import jvn.JvnException;
 
 import java.io.Serializable;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -45,4 +46,6 @@ public interface JvnRemoteServer extends Remote {
 	 * @throws JvnException    JVN exception
 	 **/
 	Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException;
+
+	void jvnCoordReconnect() throws RemoteException;
 }

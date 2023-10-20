@@ -1,18 +1,14 @@
 package burst;
 
-public class Counter implements ICounter {
-    private long value;
+import jvn.annotation.JvnLockMethod;
 
-    public Counter(){
-        value = 0;
-    }
-    @Override
-    public long getValue() {
-        return value;
-    }
+import java.io.Serializable;
 
-    @Override
-    public void incrementByOne() {
-        value++;
-    }
+public interface Counter extends Serializable {
+
+	@JvnLockMethod(lockType = "read")
+	long getValue();
+
+	@JvnLockMethod(lockType = "write")
+	void incrementByOne();
 }
