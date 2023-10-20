@@ -10,8 +10,7 @@ import jvn.api.JvnObject;
 import jvn.api.JvnRemoteCoord;
 import jvn.api.JvnRemoteServer;
 
-import java.io.Serial;
-import java.io.Serializable;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -28,8 +27,11 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 	private int nextId;
 
-	private final Hashtable<String, Integer> names;
-	private final Hashtable<Integer, JvnObjectData> objects;
+	private Hashtable<String, Integer> names;
+	private Hashtable<Integer, JvnObjectData> objects;
+
+	private final String SERVER_FILE_STATUS = "status.serv";
+
 
 	/**
 	 * Default constructor.
@@ -46,6 +48,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		Registry registry = LocateRegistry.createRegistry(1224);
 		registry.rebind("Coordinator", this);
 		System.out.println("Javanaise central coordinator is ready.");
+		restoreStatus();
 	}
 
 	public synchronized int jvnGetObjectId() throws RemoteException, JvnException {
@@ -120,6 +123,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 		System.out.println("Object " + joi + " lock for writing");
 		data.setWriteServer(js);
+		saveStatus();
 		return data.getJvnObject().jvnGetSharedObject();
 	}
 
@@ -135,4 +139,39 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		}
 		System.out.println("Terminate server");
 	}
+
+	void saveStatus(){
+		try {
+			FileOutputStream fileOut = new FileOutputStream(SERVER_FILE_STATUS);
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(this);
+			out.close();
+			fileOut.close();
+			System.out.println("Object has been serialized and written to myObject.ser");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	void restoreStatus(){
+		try {
+			FileInputStream fileIn = new FileInputStream(SERVER_FILE_STATUS);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			JvnCoordImpl loadedObject = (JvnCoordImpl) in.readObject();
+
+			nextId = loadedObject.nextId;
+			objects = loadedObject.objects;
+			names = loadedObject.names;
+
+			in.close();
+			fileIn.close();
+			// Now, 'loadedObject' contains the deserialized object
+		} catch (IOException e){
+
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+
 }
