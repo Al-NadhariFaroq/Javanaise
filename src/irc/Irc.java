@@ -35,7 +35,7 @@ public class Irc {
 
 			// create the graphical part of the Chat application
 			new Irc(sentence);
-		} catch (Exception e) {
+		} catch (JvnException e) {
 			System.out.println("IRC problem : " + e.getMessage());
 			e.printStackTrace();
 		}

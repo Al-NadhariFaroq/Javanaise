@@ -1,4 +1,4 @@
-package burst;
+package counter;
 
 public class CounterImpl implements Counter {
 	private long value;
@@ -11,7 +11,7 @@ public class CounterImpl implements Counter {
 		return value;
 	}
 
-	public void incrementByOne() {
+	public void increment() {
 		value++;
 	}
 }

@@ -102,9 +102,7 @@ public class JvnObjectImpl implements JvnObject {
 	 */
 	private synchronized void waitUnlock() throws JvnException {
 		try {
-			System.out.println("Thread " + Thread.currentThread().getId() + ": wait for unlock");
 			this.wait();
-			System.out.println("Thread " + Thread.currentThread().getId() + ": no more wait for unlock");
 		} catch (InterruptedException e) {
 			throw new JvnException(e.toString());
 		}
@@ -130,7 +128,6 @@ public class JvnObjectImpl implements JvnObject {
 	}
 
 	public synchronized Serializable jvnInvalidateWriter() throws JvnException {
-		System.out.println("Object Invalidate Write :" + jvnObjectLock);
 		switch (jvnObjectLock) {
 			case W:
 			case RWC:

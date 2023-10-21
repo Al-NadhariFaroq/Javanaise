@@ -8,49 +8,80 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+/**
+ * {@code JvnProxy} is an invocation handler for creating dynamic proxies that interact with {@code JvnObjects}.
+ */
 public class JvnProxy implements InvocationHandler {
 	private JvnObject jo;
 
-	private JvnProxy(Serializable jos, String name) throws JvnException {
-		// initialize JVN server
+	/**
+	 * Constructor for {@code JvnProxy}.
+	 *
+	 * @param obj  The shared object to be proxied.
+	 * @param name The symbolic name of the shared object.
+	 * @throws JvnException If there's an issue with Javanaise server initialization or object creation.
+	 */
+	private JvnProxy(Serializable obj, String name) throws JvnException {
+		// Initialize the Javanaise server
 		JvnLocalServer js = JvnServerImpl.jvnGetServer();
 
-		// look up the IRC object in the JVN server if not found, create it, and register it in the JVN server
+		// Look up the shared object in the Javanaise server
 		jo = js.jvnLookupObject(name);
+
+		// If not found, create it, and register it in the Javanaise server
 		if (jo == null) {
-			jo = js.jvnCreateObject(jos);
-			// after creation, I have a write-lock on the object
+			jo = js.jvnCreateObject(obj);
 			jo.jvnUnLock();
 			js.jvnRegisterObject(name, jo);
 		}
 	}
 
-	public synchronized static Object newInstance(Serializable jos, String name) throws JvnException {
-		return java.lang.reflect.Proxy.newProxyInstance(jos.getClass().getClassLoader(),
-														jos.getClass().getInterfaces(),
-														new JvnProxy(jos, name)
+	/**
+	 * Create a new {@code JvnProxy} instance for a given object.
+	 *
+	 * @param obj  The shared object to be proxied.
+	 * @param name The symbolic name of the shared object.
+	 * @return A proxy instance for the provided object.
+	 * @throws JvnException If there's an issue with Javanaise server initialization or object creation.
+	 */
+	public synchronized static Object newInstance(Serializable obj, String name) throws JvnException {
+		return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(),
+														obj.getClass().getInterfaces(),
+														new JvnProxy(obj, name)
 		);
 	}
 
+	/**
+	 * Invoke a method on the shared object, optionally applying a lock.
+	 *
+	 * @param proxy  The proxy object.
+	 * @param method The method to invoke.
+	 * @param args   The method arguments.
+	 * @return The result of the method invocation.
+	 * @throws Throwable If there's an issue during method invocation.
+	 */
 	public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		JvnLockMethod lockType = method.getAnnotation(JvnLockMethod.class);
-		if (lockType != null) {
-			switch (lockType.lockType()) {
-				case "read":
+		Object result;
+
+		// Check if the method has a JvnLockMethod annotation
+		JvnLockMethod lockMethod = method.getAnnotation(JvnLockMethod.class);
+		if (lockMethod == null) {
+			// Execute the designated method without locking
+			result = method.invoke(jo.jvnGetSharedObject(), args);
+		} else {
+			// Lock the JVN object based on the annotation's lock type
+			switch (lockMethod.lockType()) {
+				case READ:
 					jo.jvnLockRead();
 					break;
-				case "write":
+				case WRITE:
 					jo.jvnLockWrite();
 					break;
-				default:
-					throw new JvnException("Invoke error: unknown method lock type");
 			}
-		} else {
-			throw new JvnException("Invoke error: method is not locked");
+			// Execute the designated method, then release any locks
+			result = method.invoke(jo.jvnGetSharedObject(), args);
+			jo.jvnUnLock();
 		}
-
-		Object result = method.invoke(jo.jvnGetSharedObject(), args);
-		jo.jvnUnLock();
 		return result;
 	}
 }

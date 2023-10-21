@@ -162,9 +162,8 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		try {
 			FileInputStream fileIn = new FileInputStream(SERVER_FILE_STATUS);
 
-			Scanner scanner = new Scanner(System.in);
 			System.out.println("Do you want to restore the coordinator? Y/N");
-			String res = scanner.nextLine();
+			String res = new Scanner(System.in).nextLine();
 
 			if (res.equalsIgnoreCase("y") || res.equalsIgnoreCase("yes")) {
 				ObjectInputStream in = new ObjectInputStream(fileIn);
