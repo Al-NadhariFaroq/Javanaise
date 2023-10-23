@@ -3,10 +3,11 @@ package jvn;
 import jvn.api.JvnObject;
 import jvn.api.JvnRemoteServer;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-class JvnObjectData {
+class JvnObjectData implements Serializable {
 	private JvnObject jvnObject;
 	private final Set<JvnRemoteServer> servers;
 	private final Set<JvnRemoteServer> readServers;

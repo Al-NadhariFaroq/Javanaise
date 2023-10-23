@@ -100,7 +100,7 @@ public class JvnObjectImpl implements JvnObject {
 	 *
 	 * @throws JvnException JVN exception
 	 */
-	private void waitUnlock() throws JvnException {
+	private synchronized void waitUnlock() throws JvnException {
 		try {
 			this.wait();
 		} catch (InterruptedException e) {

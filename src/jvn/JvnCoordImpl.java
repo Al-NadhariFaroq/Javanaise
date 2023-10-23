@@ -10,14 +10,14 @@ import jvn.api.JvnObject;
 import jvn.api.JvnRemoteCoord;
 import jvn.api.JvnRemoteServer;
 
-import java.io.Serial;
-import java.io.Serializable;
+import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Scanner;
 
 /**
  * Implementation of the JVN Coordinator.
@@ -28,8 +28,10 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 	private int nextId;
 
-	private final Hashtable<String, Integer> names;
-	private final Hashtable<Integer, JvnObjectData> objects;
+	private Hashtable<String, Integer> names;
+	private Hashtable<Integer, JvnObjectData> objects;
+
+	private final String SERVER_FILE_STATUS = "status.serv";
 
 	/**
 	 * Default constructor.
@@ -38,13 +40,15 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 	 * @throws JvnException    JVN exception
 	 **/
 	public JvnCoordImpl() throws RemoteException, JvnException {
-		nextId = 0;
 		objects = new Hashtable<>();
 		names = new Hashtable<>();
+		nextId = 1;
 
 		// Bind the coordinator remote object's stub in the RMI registry
 		Registry registry = LocateRegistry.createRegistry(1224);
 		registry.rebind("Coordinator", this);
+
+		restoreStatus();
 		System.out.println("Javanaise central coordinator is ready.");
 	}
 
@@ -67,6 +71,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 			objects.put(joi, new JvnObjectData(new JvnObjectImpl(jo.jvnGetSharedObject(), joi, JvnLockState.NL), js));
 		}
 
+		saveStatus();
 		System.out.println("Registration of object " + jo.jvnGetObjectId() + " as '" + jon + "'");
 	}
 
@@ -79,12 +84,13 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 		System.out.println("Found the object named '" + jon + "'");
 		JvnObjectData data = objects.get(names.get(jon));
 		data.getServers().add(js);
+		saveStatus();
 		return data.getJvnObject();
 	}
 
 	public synchronized Serializable jvnLockRead(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
+		System.out.println("Read lock demanded");
 		JvnObjectData data = objects.get(joi);
-
 		JvnRemoteServer writeServer = data.getWriteServer();
 		if (writeServer != null) {
 			Serializable jos = writeServer.jvnInvalidateWriterForReader(joi);
@@ -95,10 +101,12 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 		System.out.println("Object " + joi + " lock for reading");
 		data.getReadServers().add(js);
+		saveStatus();
 		return data.getJvnObject().jvnGetSharedObject();
 	}
 
 	public synchronized Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws RemoteException, JvnException {
+		System.out.println("Write lock demanded");
 		JvnObjectData data = objects.get(joi);
 
 		Iterator<JvnRemoteServer> readServersIt = data.getReadServers().iterator();
@@ -119,6 +127,7 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 
 		System.out.println("Object " + joi + " lock for writing");
 		data.setWriteServer(js);
+		saveStatus();
 		return data.getJvnObject().jvnGetSharedObject();
 	}
 
@@ -132,6 +141,62 @@ class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord {
 			data.getReadServers().remove(js);
 			data.getServers().remove(js);
 		}
+		saveStatus();
 		System.out.println("Terminate server");
+	}
+
+	private void saveStatus() {
+		try {
+			FileOutputStream fileOut = new FileOutputStream(SERVER_FILE_STATUS);
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(this);
+			out.close();
+			fileOut.close();
+			System.out.println("Object has been serialized and written");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void restoreStatus() {
+		try {
+			FileInputStream fileIn = new FileInputStream(SERVER_FILE_STATUS);
+
+			System.out.println("Do you want to restore the coordinator? Y/N");
+			String res = new Scanner(System.in).nextLine();
+
+			if (res.equalsIgnoreCase("y") || res.equalsIgnoreCase("yes")) {
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				JvnCoordImpl loadedObject = (JvnCoordImpl) in.readObject();
+				in.close();
+				fileIn.close();
+
+				nextId = loadedObject.nextId;
+				objects = loadedObject.objects;
+				names = loadedObject.names;
+
+				for (JvnObjectData data : objects.values()) {
+					for (JvnRemoteServer js : data.getServers()) {
+						try {
+							js.jvnCoordReconnect();
+						} catch (RemoteException e) {
+							for (JvnObjectData data2 : objects.values()) {
+								if (js.equals(data2.getWriteServer())) {
+									data.setWriteServer(null);
+								}
+								data.getReadServers().remove(js);
+								data.getServers().remove(js);
+							}
+						}
+					}
+				}
+
+				System.out.println("Coordinator has been deserialized and read");
+			}
+		} catch (IOException e) {
+			System.out.println("No need to restore the coordinator");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }

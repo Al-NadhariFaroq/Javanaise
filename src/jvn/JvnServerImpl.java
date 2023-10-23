@@ -13,6 +13,7 @@ import jvn.api.JvnRemoteServer;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -28,7 +29,7 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 
 	private static JvnServerImpl jvnServer = null; // A JVN server is managed as a singleton
 
-	private final JvnRemoteCoord coordinator;
+	private JvnRemoteCoord coordinator;
 	final Hashtable<Integer, JvnObject> objects;
 
 	/**
@@ -49,43 +50,43 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 	 * @return the JVN server
 	 * @throws JvnException JVN exception
 	 **/
-	public static JvnLocalServer jvnGetServer() throws JvnException {
+	public synchronized static JvnLocalServer jvnGetServer() throws JvnException {
 		if (jvnServer == null) {
 			try {
 				jvnServer = new JvnServerImpl();
 			} catch (Exception e) {
-				throw new JvnException("Error creating the Javanaise server!\n" + e);
+				throw new JvnException("Error creating the Javanaise server: coordinator offline");
 			}
 		}
 		return jvnServer;
 	}
 
-	public void jvnTerminate() throws JvnException {
+	public synchronized void jvnTerminate() throws JvnException {
 		try {
 			coordinator.jvnTerminate(this);
 		} catch (RemoteException e) {
-			throw new JvnException("Error terminating the Javanaise server!\n" + e);
+			throw new JvnException("Error terminating the Javanaise server: coordinator offline");
 		}
 	}
 
-	public JvnObject jvnCreateObject(Serializable o) throws JvnException {
+	public synchronized JvnObject jvnCreateObject(Serializable o) throws JvnException {
 		try {
 			return new JvnObjectImpl(o, coordinator.jvnGetObjectId(), JvnLockState.W);
 		} catch (RemoteException e) {
-			throw new JvnException("Error creating the Javanaise object!\n" + e);
+			throw new JvnException("Error creating the Javanaise object: coordinator offline");
 		}
 	}
 
-	public void jvnRegisterObject(String jon, JvnObject jo) throws JvnException {
+	public synchronized void jvnRegisterObject(String jon, JvnObject jo) throws JvnException {
 		try {
 			coordinator.jvnRegisterObject(jon, jo, this);
 			objects.put(jo.jvnGetObjectId(), jo);
 		} catch (RemoteException e) {
-			throw new JvnException("Error registering the Javanaise object!\n" + e);
+			throw new JvnException("Error registering the Javanaise object: coordinator offline");
 		}
 	}
 
-	public JvnObject jvnLookupObject(String jon) throws JvnException {
+	public synchronized JvnObject jvnLookupObject(String jon) throws JvnException {
 		try {
 			JvnObject jo = coordinator.jvnLookupObject(jon, this);
 			if (jo != null) {
@@ -93,35 +94,48 @@ public class JvnServerImpl extends UnicastRemoteObject implements JvnLocalServer
 			}
 			return jo;
 		} catch (RemoteException e) {
-			throw new JvnException("Error looking up the Javanaise object!\n" + e);
+			throw new JvnException("Error looking up the Javanaise object: coordinator offline");
 		}
 	}
 
-	public Serializable jvnLockRead(int joi) throws JvnException {
+	public synchronized Serializable jvnLockRead(int joi) throws JvnException {
 		try {
 			return coordinator.jvnLockRead(joi, this);
 		} catch (RemoteException e) {
-			throw new JvnException("Error read-locking the Javanaise object!\n" + e);
+			throw new JvnException("Error read-locking the Javanaise object: coordinator offline");
 		}
 	}
 
-	public Serializable jvnLockWrite(int joi) throws JvnException {
+	public synchronized Serializable jvnLockWrite(int joi) throws JvnException {
 		try {
 			return coordinator.jvnLockWrite(joi, this);
 		} catch (RemoteException e) {
-			throw new JvnException("Error write-locking the Javanaise object!\n" + e);
+			throw new JvnException("Error write-locking the Javanaise object: coordinator offline");
 		}
 	}
 
-	public void jvnInvalidateReader(int joi) throws RemoteException, JvnException {
+	public synchronized void jvnInvalidateReader(int joi) throws RemoteException, JvnException {
+		System.out.println("LocalServer invalidate reader");
 		objects.get(joi).jvnInvalidateReader();
 	}
 
-	public Serializable jvnInvalidateWriter(int joi) throws RemoteException, JvnException {
+	public synchronized Serializable jvnInvalidateWriter(int joi) throws RemoteException, JvnException {
+		System.out.println("LocalServer invalidate write");
 		return objects.get(joi).jvnInvalidateWriter();
 	}
 
-	public Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException {
+	public synchronized Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException {
+		System.out.println("LocalServer invalidate writer for reader");
 		return objects.get(joi).jvnInvalidateWriterForReader();
+	}
+
+	public synchronized void jvnCoordReconnect() throws RemoteException {
+		try {
+			Registry registry = LocateRegistry.getRegistry(1224);
+			coordinator = (JvnRemoteCoord) registry.lookup("Coordinator");
+			System.out.println("Coordinator is back online");
+		} catch (NotBoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

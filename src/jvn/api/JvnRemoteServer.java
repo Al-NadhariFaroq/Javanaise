@@ -45,4 +45,11 @@ public interface JvnRemoteServer extends Remote {
 	 * @throws JvnException    JVN exception
 	 **/
 	Serializable jvnInvalidateWriterForReader(int joi) throws RemoteException, JvnException;
+
+	/**
+	 * Reconnect the coordinator.
+	 *
+	 * @throws RemoteException Java RMI exception
+	 */
+	void jvnCoordReconnect() throws RemoteException;
 }
