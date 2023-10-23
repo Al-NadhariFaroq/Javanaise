@@ -14,7 +14,7 @@ public class CounterBurst {
 		}
 
 		// create a proxy to access at a sentence
-		Counter counter = (Counter) JvnProxy.newInstance(new CounterImpl(), "counter");
+		Counter counter = (Counter) JvnProxy.newInstance(CounterImpl.class, "counter");
 
 		for (int i = 1; i <= nbIterations; i++) {
 			System.out.println(id + ": " + counter.getValue());

@@ -14,7 +14,7 @@ public class IrcBurst {
 		}
 
 		// create a proxy to access at a sentence
-		Sentence sentence = (Sentence) JvnProxy.newInstance(new SentenceImpl(), "IRC");
+		Sentence sentence = (Sentence) JvnProxy.newInstance(SentenceImpl.class, "IRC");
 
 		for (int i = 1; i <= nbIterations; i++) {
 			String read = sentence.read();
