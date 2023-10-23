@@ -6,7 +6,6 @@ import jvn.api.JvnObject;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
