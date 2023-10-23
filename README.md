@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <title>Javanaise</title>
-</head>
-
 <body>
 
 <h1>Javanaise</h1>
